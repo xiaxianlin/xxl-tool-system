@@ -1,4 +1,4 @@
-name: Deploy NestJS Project
+name: Deploy Tool System
 
 on:
   push:
