@@ -43,18 +43,25 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Add SSH key
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Package project
+        run: zip -r nestjs-project.zip ./dist
 
-      - name: Copy files to server
+      - name: Upload to server via SCP
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          scp -o StrictHostKeyChecking=no -r ./dist ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/ubuntu/api
+          sshpass -p "$SERVER_PASSWORD" scp nestjs-project.zip $SERVER_USER@$SERVER_HOST:/home/ubuntu/api
 
-      - name: Restart server
+      - name: Extract and start server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          sshpass -p "$SERVER_PASSWORD" ssh $SERVER_USER@$SERVER_HOST << 'EOF'
+            unzip -o /home/ubuntu/api/nestjs-project.zip -d /home/ubuntu/api
             cd /home/ubuntu/api
             pm2 restart all || pm2 start dist/main.js --name "xxl-tool-system"
           EOF
