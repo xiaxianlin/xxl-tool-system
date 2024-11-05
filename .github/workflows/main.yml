@@ -1,4 +1,4 @@
-name: Deploy Tool System
+name: Deploy to Tencent Cloud
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20' # 指定你的 Node.js 版本
+          node-version: '20' # 根据你的项目需求调整 Node.js 版本
 
       - name: Install dependencies
         run: npm install
@@ -24,25 +24,18 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Package project
-        run: zip -r xxl-tool-system.zip ./dist
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Upload to server via SCP
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+      - name: Copy files to server
         run: |
-          sshpass -p "$SERVER_PASSWORD" scp xxl-tool-system.zip $SERVER_USER@$SERVER_HOST:～/api
+          scp -o StrictHostKeyChecking=no -r ./dist ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/ubuntu/api
 
-      - name: Extract and start server
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+      - name: Restart server
         run: |
-          sshpass -p "$SERVER_PASSWORD" ssh $SERVER_USER@$SERVER_HOST << 'EOF'
-            unzip -o ~/api/xxl-tool-system.zip -d ～/api
-            cd ~/api
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /home/ubuntu/api
             pm2 restart all || pm2 start dist/main.js --name "xxl-tool-system"
           EOF
