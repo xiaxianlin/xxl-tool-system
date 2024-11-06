@@ -11,12 +11,12 @@ export class AuthService {
   ) {}
 
   async signIn(username: string, password: string): Promise<any> {
-    const user = await this.userService.findByUsername(username);
+    const user = await this.userService.exists(username);
     if (!user) {
-      throw new UnauthorizedException('用户名或密码错误');
+      throw new UnauthorizedException('用户不存在');
     }
     const isMatch = await bcrypt.compare(password, user.password);
-    if (isMatch) {
+    if (!isMatch) {
       throw new UnauthorizedException('用户名或密码错误');
     }
     return {
