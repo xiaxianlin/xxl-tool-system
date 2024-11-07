@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { UserService } from '@user/services/user.service';
 import { JwtService } from '@nestjs/jwt';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { JwtService } from '@nestjs/jwt';
     RoleModule,
     UserModule,
     BookModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService, UserService, JwtService],
