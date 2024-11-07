@@ -14,6 +14,7 @@ import { Role } from '@permission/role/enums/role.enum';
 import { CreateUserDto, createUserSchema } from '../dtos/user.dto';
 import { UserService } from '@user/services/user.service';
 import { isAdmin } from '@common/utils';
+import { Request } from 'express';
 
 @Roles(Role.Admin, Role.Manager)
 @Controller('user')
@@ -21,7 +22,7 @@ export class UserController {
   constructor(private userService: UserService) {}
   @Get(':uid')
   findByUid(@Req() request: Request, @Param('uid') uid: string) {
-    if (isAdmin(request['payload'].user)) {
+    if (isAdmin(request.user)) {
       return this.userService.findOne({ uid });
     }
     return this.userService.findOneWithoutAdmin({ uid });
@@ -29,7 +30,7 @@ export class UserController {
 
   @Get('/username/:username')
   findByUsername(@Req() request: Request, @Param('username') username: string) {
-    if (isAdmin(request['payload'].user)) {
+    if (isAdmin(request.user)) {
       return this.userService.findOne({ username });
     }
     return this.userService.findOneWithoutAdmin({ username });

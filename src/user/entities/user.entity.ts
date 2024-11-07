@@ -12,7 +12,7 @@ export class UserEntity {
   @Column()
   password: string;
 
-  @Column()
+  @Column({ type: 'enum', enum: Role })
   role: Role;
 
   @Column({ name: 'create_time' })

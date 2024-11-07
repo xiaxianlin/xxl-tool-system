@@ -2,6 +2,7 @@ import * as bcrypt from 'bcrypt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '@user/services/user.service';
+import { UserEntity } from '@user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -10,7 +11,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(username: string, password: string): Promise<any> {
+  async validateUser(username: string, password: string) {
     const user = await this.userService.exists(username);
     if (!user) {
       throw new UnauthorizedException('用户不存在');
@@ -19,8 +20,10 @@ export class AuthService {
     if (!isMatch) {
       throw new UnauthorizedException('用户名或密码错误');
     }
-    return {
-      access_token: await this.jwtService.signAsync({ user }),
-    };
+    return user;
+  }
+
+  async login(user: UserEntity) {
+    return { access_token: this.jwtService.sign({ user }) };
   }
 }

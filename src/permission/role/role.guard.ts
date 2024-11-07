@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from './enums/role.enum';
 import { ROLES_KEY } from './decorators/role.decorator';
@@ -8,14 +13,17 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
+    const roles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!requiredRoles) {
+    if (!roles) {
       return true;
     }
-    const { payload } = context.switchToHttp().getRequest();
-    return requiredRoles.some((role) => payload.user.role === role);
+    const { user } = context.switchToHttp().getRequest();
+    if (!roles.includes(user.role)) {
+      throw new UnauthorizedException('当前账户权限不足');
+    }
+    return true;
   }
 }
