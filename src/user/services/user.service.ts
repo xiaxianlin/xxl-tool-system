@@ -1,39 +1,43 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from '../entities/user.entity';
 import { Repository } from 'typeorm';
 import { Role } from '@permission/role/enums/role.enum';
 import * as uuid from 'uuid';
-import { encodePassword } from '@common/utils/auth';
+import { encodePassword, validatePassword } from '@common/utils/auth';
 import { CreateUserDto } from '@user/dtos/user.dto';
+import { UserMainWhere } from '@user/interfaces/user.interface';
+import { UserProfileEntity } from '@user/entities/user-profile.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
-    private usersRepository: Repository<UserEntity>,
+    private userRepository: Repository<UserEntity>,
+    @InjectRepository(UserProfileEntity)
+    private userProfileRepository: Repository<UserProfileEntity>,
   ) {}
 
-  async exists(username: string) {
-    return this.usersRepository.findOneBy({ username });
+  private readonly logger = new Logger(UserService.name);
+
+  private async exists(where: UserMainWhere) {
+    return this.userRepository.existsBy({ ...where, status: 1 });
   }
 
   async initAdmin(username: string, password: string) {
-    const data = await this.findOne({ username });
-    if (data) return data;
-    const admin = this.usersRepository.create({
-      uid: uuid.v4(),
-      username,
-      password: await encodePassword(password),
-      role: Role.Admin,
-      createTime: Date.now().toString(),
-    });
-    await this.usersRepository.insert(admin);
-    return admin;
+    if (await this.exists({ username })) return;
+    await this.create({ username, password, role: Role.Admin });
   }
 
-  async findOne(where: { uid?: string; username?: string }) {
-    const user = await this.usersRepository.findOne({
+  async findOne(where: UserMainWhere, params?: { includePassword?: boolean }) {
+    if (!(await this.exists(where))) {
+      throw new InternalServerErrorException('账户不存在或被禁用');
+    }
+    const user = await this.userRepository.findOne({
       where: { ...where, status: 1 },
       select: {
         uid: true,
@@ -41,29 +45,72 @@ export class UserService {
         role: true,
         createTime: true,
         updateTime: true,
+        password: params?.includePassword,
       },
     });
     return user;
   }
 
-  async findOneWithoutAdmin(where: { uid?: string; username?: string }) {
-    const user = await this.findOne(where);
-    if (!user || user.role === Role.Admin) {
-      throw new InternalServerErrorException({ message: '用户不存在' });
+  async create(entity: Partial<UserEntity>) {
+    if (await this.exists({ username: entity.username })) {
+      throw new InternalServerErrorException('账户不存在或被禁用');
     }
-    return user;
-  }
 
-  async create(createUserDto: CreateUserDto) {
     const uid = uuid.v4();
-    const user = this.usersRepository.create({
-      ...createUserDto,
+    const user = this.userRepository.create({
+      ...entity,
       uid,
-      password: await encodePassword(createUserDto.password),
+      password: await encodePassword(entity.password),
       createTime: Date.now().toString(),
     });
-    const res = this.usersRepository.insert(user);
-    console.log('insert result:', res);
+    const res = this.userRepository.insert(user);
+    this.logger.log('insert user: ', res);
     return uid;
+  }
+
+  async remove(uid: string) {
+    await this.userRepository.delete({ uid });
+    await this.userProfileRepository.delete({ uid });
+  }
+
+  /** 停用账户 */
+  async stop(uid: string) {
+    if (!(await this.exists({ uid }))) {
+      throw new InternalServerErrorException('账户不存在或被禁用');
+    }
+
+    const res = await this.userRepository.update({ uid }, { status: 0 });
+    this.logger.log(`stop user: ${res.affected}`);
+    return res.affected;
+  }
+
+  /** 修改密码 */
+  async updatePassword(
+    uid: string,
+    params: { oldValue?: string; newValue?: string },
+  ) {
+    if (!(await this.exists({ uid }))) {
+      throw new InternalServerErrorException('账户不存在或被禁用');
+    }
+
+    const user = await this.userRepository.findOneBy({ uid });
+    console.log(uid, params.oldValue, user.password);
+    const valid = await validatePassword(params.oldValue, user.password);
+    if (!valid) {
+      throw new InternalServerErrorException('原密码错误');
+    }
+
+    return this.userRepository.update(
+      { uid },
+      { password: await encodePassword(params.newValue) },
+    );
+  }
+
+  /** 修改用户名 */
+  async updateUsername(uid: string, username: string) {
+    if (!(await this.exists({ uid }))) {
+      throw new InternalServerErrorException('账户不存在或被禁用');
+    }
+    return this.userRepository.update({ uid }, { username });
   }
 }

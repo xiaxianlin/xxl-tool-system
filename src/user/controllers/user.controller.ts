@@ -3,7 +3,7 @@ import {
   Body,
   Controller,
   Get,
-  InternalServerErrorException,
+  Logger,
   Param,
   Post,
   Req,
@@ -11,38 +11,62 @@ import {
 } from '@nestjs/common';
 import { Roles } from '@permission/role/decorators/role.decorator';
 import { Role } from '@permission/role/enums/role.enum';
-import { CreateUserDto, createUserSchema } from '../dtos/user.dto';
+import {
+  CreateUserDto,
+  createUserSchema,
+  UpdatePasswordDto,
+  updatePasswordSchema,
+  UpdateUsernameDto,
+  updateUsernameSchema,
+} from '../dtos/user.dto';
 import { UserService } from '@user/services/user.service';
 import { isAdmin } from '@common/utils';
 import { Request } from 'express';
+import { UserQueryParams } from '@user/interfaces/user.interface';
 
-@Roles(Role.Admin, Role.Manager)
+@Roles(Role.Admin)
 @Controller('user')
 export class UserController {
-  constructor(private userService: UserService) {}
-  @Get(':uid')
-  findByUid(@Req() request: Request, @Param('uid') uid: string) {
-    if (isAdmin(request.user)) {
-      return this.userService.findOne({ uid });
-    }
-    return this.userService.findOneWithoutAdmin({ uid });
-  }
+  private readonly logger = new Logger(UserController.name, {
+    timestamp: true,
+  });
 
-  @Get('/username/:username')
-  findByUsername(@Req() request: Request, @Param('username') username: string) {
-    if (isAdmin(request.user)) {
-      return this.userService.findOne({ username });
-    }
-    return this.userService.findOneWithoutAdmin({ username });
-  }
+  constructor(private userService: UserService) {}
 
   @Post('/create')
   @Roles(Role.Admin)
   @UsePipes(new ZodValidationPipe(createUserSchema))
   async create(@Body() createUserDto: CreateUserDto) {
-    if (await this.userService.exists(createUserDto.username)) {
-      throw new InternalServerErrorException('账号已经存在');
-    }
     return this.userService.create(createUserDto);
+  }
+
+  @Get('/get/:uid')
+  findByUid(@Req() request: Request, @Param('uid') uid: string) {
+    return this.userService.findOne({ uid });
+  }
+
+  @Post('/delete/:uid')
+  async remove(@Param('uid') uid: string) {
+    this.logger.log(`'remove uid: ${uid}'`);
+    await this.userService.remove(uid);
+    return { success: true };
+  }
+
+  @Post('/update_username/:uid')
+  @UsePipes(new ZodValidationPipe(updateUsernameSchema))
+  async updateUsername(
+    @Body() updateUsernameDto: UpdateUsernameDto,
+    @Param('uid') uid: string,
+  ) {
+    return this.userService.updateUsername(uid, updateUsernameDto.username);
+  }
+
+  @Post('/update_password/:uid')
+  @UsePipes(new ZodValidationPipe(updatePasswordSchema))
+  async updatePassword(
+    @Body() updatePasswordDto: UpdatePasswordDto,
+    @Param('uid') uid: string,
+  ) {
+    return this.userService.updatePassword(uid, updatePasswordDto);
   }
 }

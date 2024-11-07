@@ -1,8 +1,7 @@
-import * as bcrypt from 'bcrypt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { UserService } from '@user/services/user.service';
-import { UserEntity } from '@user/entities/user.entity';
+import { validatePassword } from '@common/utils/auth';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -12,18 +11,21 @@ export class AuthService {
   ) {}
 
   async validateUser(username: string, password: string) {
-    const user = await this.userService.exists(username);
+    const user = await this.userService.findOne(
+      { username },
+      { includePassword: true },
+    );
     if (!user) {
       throw new UnauthorizedException('用户不存在');
     }
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await validatePassword(password, user.password);
     if (!isMatch) {
       throw new UnauthorizedException('用户名或密码错误');
     }
     return user;
   }
 
-  async login(user: UserEntity) {
+  async login(user: any) {
     return { access_token: this.jwtService.sign({ user }) };
   }
 }
