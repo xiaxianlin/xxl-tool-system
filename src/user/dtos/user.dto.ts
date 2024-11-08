@@ -1,4 +1,5 @@
 import { Role } from '@permission/role/enums/role.enum';
+import e from 'express';
 import { z } from 'zod';
 
 export const createUserSchema = z
@@ -40,3 +41,11 @@ export const updateUsernameSchema = z.object({
 });
 
 export type UpdateUsernameDto = z.infer<typeof updateUsernameSchema>;
+
+export type UserSearchDto = {
+  username?: string;
+  role?: string;
+  status?: number;
+  page?: number;
+  size?: number;
+};

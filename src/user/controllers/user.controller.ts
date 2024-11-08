@@ -6,7 +6,7 @@ import {
   Logger,
   Param,
   Post,
-  Req,
+  Query,
   UsePipes,
 } from '@nestjs/common';
 import { Roles } from '@permission/role/decorators/role.decorator';
@@ -18,18 +18,17 @@ import {
   updatePasswordSchema,
   UpdateUsernameDto,
   updateUsernameSchema,
+  UserSearchDto,
 } from '../dtos/user.dto';
 import { UserService } from '@user/services/user.service';
-import { isAdmin } from '@common/utils';
-import { Request } from 'express';
-import { UserQueryParams } from '@user/interfaces/user.interface';
+import { z } from 'zod';
+import { SearchParamsParsePipe } from '@common/pipes/serach-params-parse.pipe';
+import { SearchParams } from '@common/interfaces/search.interface';
 
 @Roles(Role.Admin)
 @Controller('user')
 export class UserController {
-  private readonly logger = new Logger(UserController.name, {
-    timestamp: true,
-  });
+  private readonly logger = new Logger(UserController.name);
 
   constructor(private userService: UserService) {}
 
@@ -41,7 +40,7 @@ export class UserController {
   }
 
   @Get('/get/:uid')
-  findByUid(@Req() request: Request, @Param('uid') uid: string) {
+  findByUid(@Param('uid') uid: string) {
     return this.userService.findOne({ uid });
   }
 
@@ -68,5 +67,11 @@ export class UserController {
     @Param('uid') uid: string,
   ) {
     return this.userService.updatePassword(uid, updatePasswordDto);
+  }
+
+  @Get('/search')
+  @UsePipes(SearchParamsParsePipe)
+  async search(@Query() params: SearchParams) {
+    return this.userService.search(params);
   }
 }

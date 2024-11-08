@@ -2,12 +2,14 @@ import { Body, Controller, Post, Res, Header } from '@nestjs/common';
 import { XAiService } from './services/x-ai.service';
 import { MoonshotService } from './services/moonshot.service';
 import { Response } from 'express';
+import { OpenAIService } from './services/openai.service';
 
 @Controller('ai')
 export class AiController {
   constructor(
     private xAiService: XAiService,
     private moonshotService: MoonshotService,
+    private openAIService: OpenAIService,
   ) {}
 
   @Post('counseling')
