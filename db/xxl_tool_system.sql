@@ -63,11 +63,3 @@ CREATE TABLE `user_profile` (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
-
-
-GRANT ALL PRIVILEGES ON *.* TO 'xiaxianlin'@'%' IDENTIFIED BY 'Xiaxl.901208' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-
-CREATE USER 'xiaxianlin'@'%' IDENTIFIED WITH mysql_native_password BY 'Xiaxl.901208';
-
-
