@@ -29,7 +29,6 @@ CREATE TABLE `book` (
     `publisher` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT '',
     `create_time` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
     `update_time` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '',
-    `status` int DEFAULT '1',
     PRIMARY KEY (`isbn`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb3;
 

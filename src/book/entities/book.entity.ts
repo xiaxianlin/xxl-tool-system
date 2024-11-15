@@ -26,7 +26,4 @@ export class BookEntity {
 
   @Column({ name: 'update_time', default: '' })
   updateTime: string;
-
-  @Column({ default: 1 })
-  status: number;
 }

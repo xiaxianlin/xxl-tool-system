@@ -1,6 +1,8 @@
 import { AddBookDto, addBookSchema } from '@book/dtos/book.dto';
 import BookService from '@book/services/book.service';
 import { DoubanService } from '@book/services/douban.service';
+import { SearchParams } from '@common/interfaces/search.interface';
+import { SearchParamsParsePipe } from '@common/pipes/serach-params-parse.pipe';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import {
   Controller,
@@ -10,6 +12,8 @@ import {
   UseInterceptors,
   UploadedFile,
   UsePipes,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/permission/role/decorators/role.decorator';
@@ -24,6 +28,12 @@ export class BookController {
     private ossService: OssService,
     private bookService: BookService,
   ) {}
+
+  @Get('/:isbn')
+  async get(@Param('isbn') isbn: string) {
+    return this.bookService.find(isbn);
+  }
+
   @Post('/douban/:isbn')
   queryByDouban(@Param('isbn') isbn: string, @Body() data: any) {
     return this.doubanService.query(isbn, data?.cookie);
@@ -43,5 +53,11 @@ export class BookController {
   @UsePipes(new ZodValidationPipe(addBookSchema))
   async add(@Body() dto: AddBookDto) {
     return await this.bookService.insert(dto);
+  }
+
+  @Get('/search')
+  @UsePipes(SearchParamsParsePipe)
+  async search(@Query() params: SearchParams) {
+    return this.bookService.search(params);
   }
 }

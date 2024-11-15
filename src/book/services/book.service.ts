@@ -2,8 +2,9 @@ import { AddBookDto } from '@book/dtos/book.dto';
 import { BookEntity } from '@book/entities/book.entity';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import OssService from 'src/shared/services/oss.service';
+import { SearchParams } from '@common/interfaces/search.interface';
 
 @Injectable()
 export default class BookService {
@@ -12,6 +13,10 @@ export default class BookService {
     @InjectRepository(BookEntity)
     private bookRepository: Repository<BookEntity>,
   ) {}
+
+  async find(isbn: string) {
+    return this.bookRepository.findBy({ isbn });
+  }
 
   async insert(dto: AddBookDto) {
     const book = await this.bookRepository.findOneBy({ isbn: dto.isbn });
@@ -29,5 +34,21 @@ export default class BookService {
     });
     const res = await this.bookRepository.insert(entity);
     return res;
+  }
+
+  async search({ filter, pagination, sort }: SearchParams) {
+    return this.bookRepository.find({
+      where: {
+        ...(filter.title ? { title: Like(`%${filter.title}%`) } : {}),
+        ...(filter.author ? { author: Like(`%${filter.author}%`) } : {}),
+        ...(filter.publisher
+          ? { publisher: Like(`%${filter.publisher}%`) }
+          : {}),
+      },
+      order: { [sort.field]: sort.order },
+      skip: (pagination.page - 1) * pagination.size,
+      take: pagination.size,
+      cache: true,
+    });
   }
 }

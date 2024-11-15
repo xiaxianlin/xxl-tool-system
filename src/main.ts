@@ -15,7 +15,7 @@ const bootstrap = async () => {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  await app.listen(3000);
+  await app.listen(process.env.PORT);
   // 初始化超级管理员账户
   await app
     .get(UserService)
