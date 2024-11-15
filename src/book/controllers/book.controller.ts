@@ -30,7 +30,7 @@ export class BookController {
   ) {}
 
   @Get('/get/:isbn')
-  async get(@Param('isbn') isbn: string) {
+  async find(@Param('isbn') isbn: string) {
     return this.bookService.find(isbn);
   }
 
