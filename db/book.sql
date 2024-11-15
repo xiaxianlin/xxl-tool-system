@@ -1,3 +1,38 @@
+/*
+ Navicat MySQL Data Transfer
+
+ Source Server         : localhost
+ Source Server Type    : MySQL
+ Source Server Version : 80200
+ Source Host           : localhost:3306
+ Source Schema         : xxl_tool_system
+
+ Target Server Type    : MySQL
+ Target Server Version : 80200
+ File Encoding         : 65001
+
+ Date: 15/11/2024 17:59:11
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for book
+-- ----------------------------
+DROP TABLE IF EXISTS `book`;
+CREATE TABLE `book` (
+  `isbn` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '',
+  `title` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT '',
+  `author` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT '',
+  `cover` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT '',
+  `published` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT '',
+  `publisher` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT '',
+  `create_time` varchar(20) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '',
+  `update_time` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '',
+  PRIMARY KEY (`isbn`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
 -- ----------------------------
 -- Records of book
 -- ----------------------------
@@ -923,3 +958,5 @@ INSERT INTO `book` (`isbn`, `title`, `author`, `cover`, `published`, `publisher`
 INSERT INTO `book` (`isbn`, `title`, `author`, `cover`, `published`, `publisher`, `create_time`, `update_time`) VALUES ('9789868020535', '蔣介石秘史', '葉邦宗', 'xcx/9789868020535.jpg', '20020901', '四方書城', '1731661543285', '');
 INSERT INTO `book` (`isbn`, `title`, `author`, `cover`, `published`, `publisher`, `create_time`, `update_time`) VALUES ('9789882194199', '不二', '馮唐', 'xcx/9789882194199.jpg', '2011-7', '天地圖書有限公司', '1731661543285', '');
 COMMIT;
+
+SET FOREIGN_KEY_CHECKS = 1;
