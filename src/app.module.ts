@@ -9,6 +9,7 @@ import { AppController } from './app.controller';
 import { UserService } from '@user/services/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { AiModule } from './ai/ai.module';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AiModule } from './ai/ai.module';
     UserModule,
     BookModule,
     AiModule,
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService, UserService, JwtService],

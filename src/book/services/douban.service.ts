@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import * as randUserAgent from 'rand-user-agent';
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import OssService from 'src/shared/services/oss.service';
 
 const FIELD_MAP = {
   '作者:': 'author',
@@ -12,7 +13,10 @@ const FIELD_MAP = {
 
 @Injectable()
 export class DoubanService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private ossService: OssService,
+  ) {}
   private logger = new Logger(DoubanService.name);
 
   private async crackPageContent(url: string, cookie?: string) {
