@@ -40,12 +40,12 @@ export class DoubanService {
     const match = content.match(/window\.__DATA__ = (\{.*?\});/);
     try {
       const result = JSON.parse(match[1]);
-      return result?.items?.find((i) => !!i.url)?.url;
+      return result?.items?.[0];
     } catch (error) {}
     return '';
   }
 
-  async query(isbn: string, cookie?: string) {
+  async parseBySearchPage(isbn: string, cookie?: string) {
     const searchPageContent = await this.crackPageContent(
       `https://search.douban.com/book/subject_search?search_text=${isbn}&cat=1001`,
       cookie,
@@ -54,12 +54,32 @@ export class DoubanService {
       throw new BadRequestException('未找到 window.__DATA__ 数据');
     }
 
-    const detailUrl = this.getDetailUrlByWindowData(searchPageContent);
-    if (!detailUrl) {
-      throw new BadRequestException('未找到详情地址');
+    const info = this.getDetailUrlByWindowData(searchPageContent);
+    if (!info) {
+      throw new BadRequestException('列表页数据解析失败');
     }
 
-    const detailPageContent = await this.crackPageContent(detailUrl, cookie);
+    const items = info.abstract?.split('/');
+    const price = items.pop().trim();
+    const published = items.pop().trim();
+    const publisher = items.pop().trim();
+    const author = items.map((i) => i.trim()).join('/');
+
+    return {
+      isbn,
+      price,
+      author,
+      published,
+      publisher,
+      url: info.url,
+      title: info.title,
+      cover: info.cover_url,
+    };
+  }
+
+  async parseByDetailPage(isbn: string, cookie?: string) {
+    const { url } = await this.parseBySearchPage(isbn, cookie);
+    const detailPageContent = await this.crackPageContent(url, cookie);
     const $ = cheerio.load(detailPageContent);
     const data = $('#info')
       .text()
@@ -67,7 +87,7 @@ export class DoubanService {
       .split(' ')
       .filter(Boolean);
 
-    const info = {};
+    const info: Record<string, string> = {};
     data.reduce((key, value) => {
       if (Object.keys(FIELD_MAP).includes(value)) return FIELD_MAP[value];
       if (value.includes(':')) return '';
@@ -76,6 +96,9 @@ export class DoubanService {
       }
       return key;
     }, '');
+
+    info.author = [info.author, info.translator].filter(Boolean).join('/');
+    delete info.translator;
 
     return {
       isbn,

@@ -15,10 +15,10 @@ export default class OssService {
     });
   }
 
-  async upload(name: string, buffer: Buffer) {
+  async upload(name: string, buffer: Buffer, dir?: string) {
     try {
       const result = await this.client.put(
-        `${process.env.OSS_DIR}/${name}`,
+        `${dir || process.env.OSS_DIR}/${name}`,
         buffer,
       );
       return result.name;

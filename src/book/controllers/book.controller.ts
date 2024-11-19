@@ -1,4 +1,4 @@
-import { AddBookDto, addBookSchema } from '@book/dtos/book.dto';
+import { BookDto, bookSchema } from '@book/dtos/book.dto';
 import BookService from '@book/services/book.service';
 import { DoubanService } from '@book/services/douban.service';
 import { SearchParams } from '@common/interfaces/search.interface';
@@ -18,14 +18,12 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from 'src/permission/role/decorators/role.decorator';
 import { Role } from 'src/permission/role/enums/role.enum';
-import OssService from 'src/shared/services/oss.service';
 
 @Roles(Role.Admin, Role.Manager)
 @Controller('book')
 export class BookController {
   constructor(
     private doubanService: DoubanService,
-    private ossService: OssService,
     private bookService: BookService,
   ) {}
 
@@ -36,28 +34,38 @@ export class BookController {
 
   @Post('/douban/:isbn')
   queryByDouban(@Param('isbn') isbn: string, @Body() data: any) {
-    return this.doubanService.query(isbn, data?.cookie);
+    return this.doubanService.parseBySearchPage(isbn, data?.cookie);
   }
 
-  @Post('/upload/:isbn')
+  @Post('/cover/:isbn')
   @UseInterceptors(FileInterceptor('file'))
-  upload(
+  cover(
     @UploadedFile() file: Express.Multer.File,
     @Param('isbn') isbn: string,
   ) {
-    const ext = file.originalname.split('.').pop();
-    return this.ossService.upload(`${isbn}.${ext}`, file.buffer);
+    return this.bookService.updateCover(isbn, file);
   }
 
   @Post('/add')
-  @UsePipes(new ZodValidationPipe(addBookSchema))
-  async add(@Body() dto: AddBookDto) {
-    return await this.bookService.insert(dto);
+  @UsePipes(new ZodValidationPipe(bookSchema))
+  async add(@Body() dto: BookDto) {
+    return this.bookService.insert(dto);
+  }
+
+  @Post('/update')
+  @UsePipes(new ZodValidationPipe(bookSchema))
+  async update(@Body() dto: BookDto) {
+    return this.bookService.update(dto);
   }
 
   @Get('/search')
   @UsePipes(SearchParamsParsePipe)
   async search(@Query() params: SearchParams) {
     return this.bookService.search(params);
+  }
+
+  @Post('/delete/:isbn')
+  remove(@Param('isbn') isbn: string) {
+    return this.bookService.remove(isbn);
   }
 }
