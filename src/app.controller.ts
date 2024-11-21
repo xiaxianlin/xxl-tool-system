@@ -29,7 +29,9 @@ export class AppController {
 
   @Post('check_login')
   async checkLogin(@Req() req: Request) {
-    return req.user?.['uid'];
+    const user: any = req.user;
+    delete user?.password;
+    return user;
   }
 
   @Post('/upload')
