@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from '../entities/user.entity';
 import { Like, Repository } from 'typeorm';
@@ -13,6 +9,7 @@ import { CreateUserDto } from '@user/dtos/user.dto';
 import { UserMainWhere } from '@user/interfaces/user.interface';
 import { UserProfileEntity } from '@user/entities/user-profile.entity';
 import { SearchParams } from '@common/interfaces/search.interface';
+import { InternalException } from '@common/expceptions/internal.exception';
 
 @Injectable()
 export class UserService {
@@ -36,7 +33,7 @@ export class UserService {
 
   async findOne(where: UserMainWhere, params?: { includePassword?: boolean }) {
     if (!(await this.exists(where))) {
-      throw new InternalServerErrorException('账户不存在或被禁用');
+      throw new InternalException('账户不存在或被禁用');
     }
     const user = await this.userRepository.findOne({
       where: { ...where, status: 1 },
@@ -54,7 +51,7 @@ export class UserService {
 
   async create(entity: Partial<UserEntity>) {
     if (await this.exists({ username: entity.username })) {
-      throw new InternalServerErrorException('账户不存在或被禁用');
+      throw new InternalException('账户不存在或被禁用');
     }
 
     const uid = uuid.v4();
@@ -77,7 +74,7 @@ export class UserService {
   /** 停用账户 */
   async stop(uid: string) {
     if (!(await this.exists({ uid }))) {
-      throw new InternalServerErrorException('账户不存在或被禁用');
+      throw new InternalException('账户不存在或被禁用');
     }
 
     const res = await this.userRepository.update({ uid }, { status: 0 });
@@ -91,13 +88,13 @@ export class UserService {
     params: { oldValue?: string; newValue?: string },
   ) {
     if (!(await this.exists({ uid }))) {
-      throw new InternalServerErrorException('账户不存在或被禁用');
+      throw new InternalException('账户不存在或被禁用');
     }
 
     const user = await this.userRepository.findOneBy({ uid });
     const valid = await validatePassword(params.oldValue, user.password);
     if (!valid) {
-      throw new InternalServerErrorException('原密码错误');
+      throw new InternalException('原密码错误');
     }
 
     return this.userRepository.update(
@@ -109,7 +106,7 @@ export class UserService {
   /** 修改用户名 */
   async updateUsername(uid: string, username: string) {
     if (!(await this.exists({ uid }))) {
-      throw new InternalServerErrorException('账户不存在或被禁用');
+      throw new InternalException('账户不存在或被禁用');
     }
     return this.userRepository.update({ uid }, { username });
   }

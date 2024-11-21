@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from '@user/services/user.service';
 import { validatePassword } from '@common/utils/auth';
 import { JwtService } from '@nestjs/jwt';
+import { InternalException } from '@common/expceptions/internal.exception';
 
 @Injectable()
 export class AuthService {
@@ -15,12 +16,9 @@ export class AuthService {
       { username },
       { includePassword: true },
     );
-    if (!user) {
-      throw new UnauthorizedException('用户不存在');
-    }
     const isMatch = await validatePassword(password, user.password);
     if (!isMatch) {
-      throw new UnauthorizedException('用户名或密码错误');
+      throw new InternalException('用户名或密码错误');
     }
     return user;
   }
