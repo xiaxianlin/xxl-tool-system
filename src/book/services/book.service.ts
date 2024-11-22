@@ -64,7 +64,7 @@ export default class BookService {
       cache: true,
     });
 
-    return { total, data };
+    return { ...pagination, total, data };
   }
 
   async remove(isbn: string) {

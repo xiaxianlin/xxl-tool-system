@@ -112,7 +112,12 @@ export class UserService {
   }
 
   async search({ filter, pagination, sort }: SearchParams) {
-    return this.userRepository.find({
+    const where = {
+      ...(filter.username ? { username: Like(`%${filter.username}%`) } : {}),
+      ...(filter.role ? { role: filter.role } : {}),
+      ...(filter.status ? { status: filter.status } : {}),
+    };
+    const data = await this.userRepository.find({
       select: {
         uid: true,
         username: true,
@@ -121,15 +126,13 @@ export class UserService {
         createTime: true,
         updateTime: true,
       },
-      where: {
-        ...(filter.username ? { username: Like(`%${filter.username}%`) } : {}),
-        ...(filter.role ? { role: filter.role } : {}),
-        ...(filter.status ? { status: filter.status } : {}),
-      },
+      where,
       order: { [sort.field]: sort.order },
       skip: (pagination.page - 1) * pagination.size,
       take: pagination.size,
       cache: true,
     });
+    const total = await this.userRepository.count({ where });
+    return { ...pagination, total, data };
   }
 }
