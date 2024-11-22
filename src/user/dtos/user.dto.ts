@@ -17,30 +17,26 @@ export const createUserSchema = z
     }),
   })
   .required();
-
 export type CreateUserDto = z.infer<typeof createUserSchema>;
 
-export const updatePasswordSchema = z.object({
-  oldValue: z.string({
-    required_error: '密码不能为空',
-    invalid_type_error: '密码输入不合法',
-  }),
-  newValue: z.string({
-    required_error: '密码不能为空',
-    invalid_type_error: '密码输入不合法',
-  }),
+/** 重置密码 */
+export const resetPasswordSchema = z.object({
+  password: z.string({ required_error: '密码不能为空' }),
 });
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
 
-export type UpdatePasswordDto = z.infer<typeof updatePasswordSchema>;
-
-export const updateUsernameSchema = z.object({
-  username: z.string({
-    required_error: '密码不能为空',
-    invalid_type_error: '密码输入不合法',
-  }),
+/** 修改密码 */
+export const modifyPasswordSchema = z.object({
+  oldValue: z.string({ required_error: '旧密码不能为空' }),
+  newValue: z.string({ required_error: '新密码不能为空' }),
 });
+export type ModifyPasswordDto = z.infer<typeof modifyPasswordSchema>;
 
-export type UpdateUsernameDto = z.infer<typeof updateUsernameSchema>;
+/** 修改账户名 */
+export const modifyUsernameSchema = z.object({
+  username: z.string({ required_error: '账户名不能为空' }),
+});
+export type ModifyUsernameDto = z.infer<typeof modifyUsernameSchema>;
 
 export type UserSearchDto = {
   username?: string;
