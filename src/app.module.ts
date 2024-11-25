@@ -10,6 +10,7 @@ import { UserService } from '@user/services/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { AiModule } from './ai/ai.module';
 import { SharedModule } from './shared/shared.module';
+import { RoleService } from '@permission/role/role.service';
 
 @Module({
   imports: [
@@ -32,6 +33,6 @@ import { SharedModule } from './shared/shared.module';
     SharedModule,
   ],
   controllers: [AppController],
-  providers: [AppService, UserService, JwtService],
+  providers: [AppService, UserService, JwtService, RoleService],
 })
 export class AppModule {}

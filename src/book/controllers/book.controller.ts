@@ -16,8 +16,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Roles } from 'src/permission/role/decorators/role.decorator';
-import { Role } from 'src/permission/role/enums/role.enum';
+import { Roles } from '@permission/role/role.decorator';
+import { Role } from '@permission/role/enums/role.enum';
 
 @Roles(Role.Admin, Role.Manager)
 @Controller('book')

@@ -12,10 +12,7 @@ export class AuthService {
   ) {}
 
   async validateUser(username: string, password: string) {
-    const user = await this.userService.findUser(
-      { username },
-      { includePassword: true },
-    );
+    const user = await this.userService.getActiveUser({ username });
     const isMatch = await validatePassword(password, user.password);
     if (!isMatch) {
       throw new InternalException('用户名或密码错误');

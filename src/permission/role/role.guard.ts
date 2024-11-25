@@ -2,11 +2,11 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from './enums/role.enum';
-import { ROLES_KEY } from './decorators/role.decorator';
+import { ROLES_KEY } from './role.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -22,7 +22,7 @@ export class RolesGuard implements CanActivate {
     }
     const { user } = context.switchToHttp().getRequest();
     if (!roles.includes(user.role)) {
-      throw new UnauthorizedException('当前账户权限不足');
+      throw new ForbiddenException('当前账户权限不足');
     }
     return true;
   }

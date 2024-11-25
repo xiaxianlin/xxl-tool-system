@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from '../entities/user.entity';
 import { Like, Repository } from 'typeorm';
@@ -14,6 +14,7 @@ import { UserMainWhere } from '@user/interfaces/user.interface';
 import { UserProfileEntity } from '@user/entities/user-profile.entity';
 import { SearchParams } from '@common/interfaces/search.interface';
 import { InternalException } from '@common/expceptions/internal.exception';
+import { time } from '@common/utils/time';
 
 @Injectable()
 export class UserService {
@@ -24,72 +25,54 @@ export class UserService {
     private userProfileRepository: Repository<UserProfileEntity>,
   ) {}
 
-  private readonly logger = new Logger(UserService.name);
-
-  private async exists(where: UserMainWhere) {
-    return this.userRepository.existsBy({ ...where, status: 1 });
-  }
-
   async initAdmin(username: string, password: string) {
-    if (await this.exists({ username })) return;
-    await this.create({ username, password, role: Role.Admin });
+    const user = await this.userRepository.findOneBy({ username });
+    if (user) {
+      return true;
+    }
+    await this.createUser({ username, password, role: Role.Admin });
   }
 
-  async findUser(where: UserMainWhere, params?: { includePassword?: boolean }) {
-    const user = await this.userRepository.findOne({
-      where: { ...where, status: 1 },
-      select: {
-        uid: true,
-        username: true,
-        role: true,
-        createTime: true,
-        updateTime: true,
-        password: params?.includePassword,
-      },
+  async getActiveUser(where: UserMainWhere) {
+    return await this.userRepository.findOneBy({ ...where, status: 1 });
+  }
+
+  async createUser(dto: CreateUserDto) {
+    const user = await this.userRepository.findOneBy({
+      username: dto.username,
     });
-    if (!user) {
-      throw new InternalException('账户不存在或被禁用');
+    if (user) {
+      throw new InternalException('账户已存在');
     }
-    return user;
-  }
-
-  async create(entity: Partial<UserEntity>) {
-    if (await this.exists({ username: entity.username })) {
-      throw new InternalException('账户不存在或被禁用');
-    }
-    const user = this.userRepository.create({
-      ...entity,
+    const entity = this.userRepository.create({
+      ...dto,
       uid: uuid.v4(),
-      password: await encodePassword(entity.password),
-      createTime: Date.now().toString(),
+      password: await encodePassword(dto.password),
+      createTime: time.current(),
     });
-    await this.userRepository.insert(user);
-    return user.uid;
+    await this.userRepository.insert(entity);
+    return entity.uid;
   }
 
-  async remove(uid: string) {
-    const res = await this.userRepository.delete({ uid });
-    await this.userProfileRepository.delete({ uid });
-    return { success: !!res.affected };
-  }
-
-  /** 停用账户 */
-  async stop(uid: string) {
-    if (!(await this.exists({ uid }))) {
-      throw new InternalException('账户不存在或被禁用');
+  async deleteUser(uid: string) {
+    const user = await this.userRepository.findOneBy({ uid });
+    if (!user) {
+      return true;
     }
-
-    const res = await this.userRepository.update({ uid }, { status: 0 });
-    return { success: !!res.affected };
+    const [res] = await Promise.all([
+      this.userRepository.delete({ uid }),
+      this.userProfileRepository.delete({ uid }),
+    ]);
+    return !!res.affected;
   }
 
   /** 修改密码 */
   async modifyPassword(uid: string, params: ModifyPasswordDto) {
-    if (!(await this.exists({ uid }))) {
+    const user = await this.userRepository.findOneBy({ uid, status: 1 });
+    if (!user) {
       throw new InternalException('账户不存在或被禁用');
     }
 
-    const user = await this.userRepository.findOneBy({ uid });
     const valid = await validatePassword(params.oldValue, user.password);
     if (!valid) {
       throw new InternalException('原密码错误');
@@ -97,34 +80,47 @@ export class UserService {
 
     const res = await this.userRepository.update(
       { uid },
-      { password: await encodePassword(params.newValue) },
+      {
+        password: await encodePassword(params.newValue),
+        updateTime: time.current(),
+      },
     );
-    return { success: !!res.affected };
+    return !!res.affected;
   }
 
   /** 修改账户 */
   async modifyUser(uid: string, dto: ModifyUserDto) {
-    const user = await this.findUser({ uid });
-    if (!user) {
-      throw new InternalException('账户不存在或被禁用');
-    }
-
-    const res = await this.userRepository.update({ uid }, dto);
-    return { success: !!res.affected };
-  }
-
-  /** 修改账户状态 */
-  async changeStatus(uid: string, status: number) {
     const user = await this.userRepository.findOneBy({ uid });
     if (!user) {
       throw new InternalException('账户不存在或被禁用');
     }
 
-    const res = await this.userRepository.update({ uid }, { status });
-    return { success: !!res.affected };
+    if (dto.password) {
+      dto.password = await encodePassword(dto.password);
+    }
+
+    const res = await this.userRepository.update(
+      { uid },
+      { ...dto, updateTime: time.current() },
+    );
+    return !!res.affected;
   }
 
-  async search({ filter, pagination, sort }: SearchParams) {
+  /** 修改账户状态 */
+  async modifyUserStatus(uid: string, status: number) {
+    const user = await this.userRepository.findOneBy({ uid });
+    if (!user) {
+      throw new InternalException('账户不存在或被禁用');
+    }
+
+    const res = await this.userRepository.update(
+      { uid },
+      { status, updateTime: time.current() },
+    );
+    return !!res.affected;
+  }
+
+  async searchUsers({ filter, pagination, sort }: SearchParams) {
     const where = {
       ...(filter.username ? { username: Like(`%${filter.username}%`) } : {}),
       ...(filter.role ? { role: filter.role } : {}),

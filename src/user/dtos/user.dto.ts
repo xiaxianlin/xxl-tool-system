@@ -6,7 +6,7 @@ export const createUserSchema = z
   .object({
     username: z.string({ required_error: '账号不能为空' }),
     password: z.string({ required_error: '密码不能为空' }),
-    role: z.enum([Role.Manager, Role.User, Role.Guest], {
+    role: z.enum([Role.Admin, Role.Manager, Role.User, Role.Guest], {
       message: '角色类型不匹配',
     }),
   })

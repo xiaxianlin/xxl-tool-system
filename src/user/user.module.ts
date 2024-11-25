@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AdminController } from './controllers/admin.controller';
+import { UserController } from './controllers/user.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
 import { UserProfileEntity } from './entities/user-profile.entity';
@@ -8,7 +8,7 @@ import { UserProfileService } from './services/user-profile.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity, UserProfileEntity])],
-  controllers: [AdminController],
+  controllers: [UserController],
   providers: [UserService, UserProfileService],
   exports: [UserService, UserProfileService, TypeOrmModule],
 })
