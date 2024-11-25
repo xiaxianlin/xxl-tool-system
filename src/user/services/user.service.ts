@@ -5,7 +5,11 @@ import { Like, Repository } from 'typeorm';
 import { Role } from '@permission/role/enums/role.enum';
 import * as uuid from 'uuid';
 import { encodePassword, validatePassword } from '@common/utils/auth';
-import { CreateUserDto, ModifyPasswordDto } from '@user/dtos/user.dto';
+import {
+  CreateUserDto,
+  ModifyPasswordDto,
+  ModifyUserDto,
+} from '@user/dtos/user.dto';
 import { UserMainWhere } from '@user/interfaces/user.interface';
 import { UserProfileEntity } from '@user/entities/user-profile.entity';
 import { SearchParams } from '@common/interfaces/search.interface';
@@ -98,30 +102,25 @@ export class UserService {
     return { success: !!res.affected };
   }
 
-  /** 重置密码 */
-  async resetPassword(uid: string, password: string) {
-    if (!(await this.exists({ uid }))) {
-      throw new InternalException('账户不存在或被禁用');
-    }
-    const res = await this.userRepository.update(
-      { uid },
-      { password: await encodePassword(password) },
-    );
-    return { success: !!res.affected };
-  }
-
-  /** 重置用户名 */
-  async resetUsername(uid: string, username: string) {
+  /** 修改账户 */
+  async modifyUser(uid: string, dto: ModifyUserDto) {
     const user = await this.findUser({ uid });
     if (!user) {
       throw new InternalException('账户不存在或被禁用');
     }
 
-    if (user.username === username) {
-      return true;
+    const res = await this.userRepository.update({ uid }, dto);
+    return { success: !!res.affected };
+  }
+
+  /** 修改账户状态 */
+  async changeStatus(uid: string, status: number) {
+    const user = await this.userRepository.findOneBy({ uid });
+    if (!user) {
+      throw new InternalException('账户不存在或被禁用');
     }
 
-    const res = await this.userRepository.update({ uid }, { username });
+    const res = await this.userRepository.update({ uid }, { status });
     return { success: !!res.affected };
   }
 

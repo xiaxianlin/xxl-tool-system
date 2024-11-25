@@ -4,14 +4,8 @@ import { z } from 'zod';
 
 export const createUserSchema = z
   .object({
-    username: z.string({
-      required_error: '账号不能为空',
-      invalid_type_error: '账号输入不合法',
-    }),
-    password: z.string({
-      required_error: '密码不能为空',
-      invalid_type_error: '密码输入不合法',
-    }),
+    username: z.string({ required_error: '账号不能为空' }),
+    password: z.string({ required_error: '密码不能为空' }),
     role: z.enum([Role.Manager, Role.User, Role.Guest], {
       message: '角色类型不匹配',
     }),
@@ -19,11 +13,12 @@ export const createUserSchema = z
   .required();
 export type CreateUserDto = z.infer<typeof createUserSchema>;
 
-/** 重置密码 */
-export const resetPasswordSchema = z.object({
-  password: z.string({ required_error: '密码不能为空' }),
+export const modifyUserSchema = z.object({
+  username: z.string().optional(),
+  password: z.string().optional(),
+  role: z.enum([Role.Manager, Role.User, Role.Guest]).optional(),
 });
-export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>;
+export type ModifyUserDto = z.infer<typeof modifyUserSchema>;
 
 /** 修改密码 */
 export const modifyPasswordSchema = z.object({
@@ -31,12 +26,6 @@ export const modifyPasswordSchema = z.object({
   newValue: z.string({ required_error: '新密码不能为空' }),
 });
 export type ModifyPasswordDto = z.infer<typeof modifyPasswordSchema>;
-
-/** 修改账户名 */
-export const modifyUsernameSchema = z.object({
-  username: z.string({ required_error: '账户名不能为空' }),
-});
-export type ModifyUsernameDto = z.infer<typeof modifyUsernameSchema>;
 
 export type UserSearchDto = {
   username?: string;

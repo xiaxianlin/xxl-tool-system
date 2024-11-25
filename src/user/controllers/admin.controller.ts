@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UsePipes,
 } from '@nestjs/common';
@@ -16,10 +17,8 @@ import { Role } from '@permission/role/enums/role.enum';
 import {
   CreateUserDto,
   createUserSchema,
-  ModifyUsernameDto,
-  modifyUsernameSchema,
-  ResetPasswordDto,
-  resetPasswordSchema,
+  ModifyUserDto,
+  modifyUserSchema,
 } from '../dtos/user.dto';
 import { UserService } from '@user/services/user.service';
 import { z } from 'zod';
@@ -58,21 +57,17 @@ export class AdminController {
     return { success: true };
   }
 
-  @Patch('/username/:uid')
-  @UsePipes(new ZodValidationPipe(modifyUsernameSchema))
-  async resetUsername(
-    @Body() dto: ModifyUsernameDto,
-    @Param('uid') uid: string,
-  ) {
-    return this.userService.resetPassword(uid, dto.username);
+  @Put('/:uid')
+  @UsePipes(new ZodValidationPipe(modifyUserSchema))
+  async resetUsername(@Body() dto: ModifyUserDto, @Param('uid') uid: string) {
+    return this.userService.modifyUser(uid, dto);
   }
 
-  @Patch('/password/:uid')
-  @UsePipes(new ZodValidationPipe(resetPasswordSchema))
-  async resetPassword(
-    @Body() dto: ResetPasswordDto,
+  @Patch('/status/:uid/:status')
+  async changeStatus(
     @Param('uid') uid: string,
+    @Param('status') status: number,
   ) {
-    return this.userService.resetPassword(uid, dto.password);
+    return this.userService.changeStatus(uid, status);
   }
 }
