@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { AiModule } from './ai/ai.module';
 import { SharedModule } from './shared/shared.module';
 import { RoleService } from '@permission/role/role.service';
+import { MenuModule } from '@permission/menu/menu.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RoleService } from '@permission/role/role.service';
     BookModule,
     AiModule,
     SharedModule,
+    MenuModule,
   ],
   controllers: [AppController],
   providers: [AppService, UserService, JwtService, RoleService],

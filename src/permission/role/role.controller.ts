@@ -18,25 +18,25 @@ import { RoleService } from './role.service';
 @Roles(Role.Admin)
 export class RoleController {
   constructor(private roleService: RoleService) {}
-  @Get('/all')
+  @Get('')
   async allRoles() {
     return this.roleService.allRoles();
   }
 
-  @Post('/')
+  @Post()
   @UsePipes(new ZodValidationPipe(roleSchema))
   async createRole(@Body() dto: RoleDto) {
     return this.roleService.createRole(dto);
   }
 
-  @Put('/')
+  @Put()
   @UsePipes(new ZodValidationPipe(roleSchema))
   async modifyRole(@Body() dto: RoleDto) {
     const res = await this.roleService.modifyRole(dto);
     return { success: res };
   }
 
-  @Delete('/:key')
+  @Delete(':key')
   async deleteRole(@Param('key') key: string) {
     const res = await this.roleService.deleteRole(key);
     return { success: res };
