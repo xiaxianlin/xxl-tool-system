@@ -18,9 +18,9 @@ import { RoleService } from './role.service';
 @Roles(Role.Admin)
 export class RoleController {
   constructor(private roleService: RoleService) {}
-  @Get('/search')
-  async searchRoles() {
-    return this.roleService.searchRoles();
+  @Get('/all')
+  async allRoles() {
+    return this.roleService.allRoles();
   }
 
   @Post('/')

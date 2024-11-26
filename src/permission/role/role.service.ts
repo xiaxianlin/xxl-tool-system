@@ -58,7 +58,7 @@ export class RoleService {
     return !!res.affected;
   }
 
-  async searchRoles() {
+  async allRoles() {
     return this.roleRepository.find();
   }
 }
