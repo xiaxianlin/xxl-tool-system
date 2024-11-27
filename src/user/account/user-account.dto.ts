@@ -1,4 +1,3 @@
-import { Role } from '@permission/role/enums/role.enum';
 import e from 'express';
 import { z } from 'zod';
 
@@ -6,9 +5,7 @@ export const createUserSchema = z
   .object({
     username: z.string({ required_error: '账号不能为空' }),
     password: z.string({ required_error: '密码不能为空' }),
-    role: z.enum([Role.Admin, Role.Manager, Role.User, Role.Guest], {
-      message: '角色类型不匹配',
-    }),
+    role: z.string({ required_error: '角色不能为空' }),
   })
   .required();
 export type CreateUserDto = z.infer<typeof createUserSchema>;
@@ -16,7 +13,7 @@ export type CreateUserDto = z.infer<typeof createUserSchema>;
 export const modifyUserSchema = z.object({
   username: z.string().optional(),
   password: z.string().optional(),
-  role: z.enum([Role.Manager, Role.User, Role.Guest]).optional(),
+  role: z.string().optional(),
 });
 export type ModifyUserDto = z.infer<typeof modifyUserSchema>;
 

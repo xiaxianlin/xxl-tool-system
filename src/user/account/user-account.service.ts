@@ -1,28 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from '../entities/user.entity';
+import { UserAccountEntity } from './user-account.entity';
 import { Like, Repository } from 'typeorm';
-import { Role } from '@permission/role/enums/role.enum';
 import * as uuid from 'uuid';
 import { encodePassword, validatePassword } from '@common/utils/auth';
-import {
-  CreateUserDto,
-  ModifyPasswordDto,
-  ModifyUserDto,
-} from '@user/dtos/user.dto';
-import { UserMainWhere } from '@user/interfaces/user.interface';
-import { UserProfileEntity } from '@user/entities/user-profile.entity';
+import { CreateUserDto, ModifyPasswordDto, ModifyUserDto } from '@user/account/user-account.dto';
+import { UserMainWhere } from '@user/account/user-account.interface';
+import { UserProfileEntity } from '@user/profile/user-profile.entity';
 import { SearchParams } from '@common/interfaces/search.interface';
 import { InternalException } from '@common/expceptions/internal.exception';
 import { time } from '@common/utils/time';
+import { RoleEntity } from '@permission/role/role.entity';
 
 @Injectable()
-export class UserService {
+export class UserAccountService {
   constructor(
-    @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
-    @InjectRepository(UserProfileEntity)
-    private userProfileRepository: Repository<UserProfileEntity>,
+    @InjectRepository(UserAccountEntity)
+    private userRepository: Repository<UserAccountEntity>,
   ) {}
 
   async initAdmin(username: string, password: string) {
@@ -30,11 +24,11 @@ export class UserService {
     if (user) {
       return true;
     }
-    await this.createUser({ username, password, role: Role.Admin });
+    await this.createUser({ username, password, role: process.env.ADMIN_ROLE_KEY });
   }
 
   async getActiveUser(where: UserMainWhere) {
-    return await this.userRepository.findOneBy({ ...where, status: 1 });
+    return await this.userRepository.findOne({ where: { ...where, status: 1 }, relations: { role: true } });
   }
 
   async createUser(dto: CreateUserDto) {
@@ -47,6 +41,7 @@ export class UserService {
     const entity = this.userRepository.create({
       ...dto,
       uid: uuid.v4(),
+      role: new RoleEntity(dto.role),
       password: await encodePassword(dto.password),
       createTime: time.current(),
     });
@@ -59,10 +54,7 @@ export class UserService {
     if (!user) {
       return true;
     }
-    const [res] = await Promise.all([
-      this.userRepository.delete({ uid }),
-      this.userProfileRepository.delete({ uid }),
-    ]);
+    const res = await this.userRepository.delete({ uid });
     return !!res.affected;
   }
 
@@ -95,14 +87,18 @@ export class UserService {
       throw new InternalException('账户不存在或被禁用');
     }
 
+    const update = new UserAccountEntity();
+    update.updateTime = time.current();
+
+    update.username = dto.username;
     if (dto.password) {
-      dto.password = await encodePassword(dto.password);
+      update.password = await encodePassword(dto.password);
+    }
+    if (dto.role) {
+      update.role = new RoleEntity(dto.role);
     }
 
-    const res = await this.userRepository.update(
-      { uid },
-      { ...dto, updateTime: time.current() },
-    );
+    const res = await this.userRepository.update({ uid }, update);
     return !!res.affected;
   }
 
@@ -113,24 +109,22 @@ export class UserService {
       throw new InternalException('账户不存在或被禁用');
     }
 
-    const res = await this.userRepository.update(
-      { uid },
-      { status, updateTime: time.current() },
-    );
+    const res = await this.userRepository.update({ uid }, { status, updateTime: time.current() });
     return !!res.affected;
   }
 
   async searchUsers({ filter, pagination, sort }: SearchParams) {
     const where = {
       ...(filter.username ? { username: Like(`%${filter.username}%`) } : {}),
-      ...(filter.role ? { role: filter.role } : {}),
+      ...(filter.role ? { role: new RoleEntity(filter.role) } : {}),
       ...(filter.status ? { status: filter.status } : {}),
     };
     const data = await this.userRepository.find({
+      relations: { role: true },
       select: {
         uid: true,
         username: true,
-        role: true,
+        role: { key: true, name: true },
         status: true,
         createTime: true,
         updateTime: true,
@@ -142,6 +136,6 @@ export class UserService {
       cache: true,
     });
     const total = await this.userRepository.count({ where });
-    return { ...pagination, total, data };
+    return { total, data };
   }
 }

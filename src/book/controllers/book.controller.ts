@@ -4,28 +4,12 @@ import { DoubanService } from '@book/services/douban.service';
 import { SearchParams } from '@common/interfaces/search.interface';
 import { SearchParamsParsePipe } from '@common/pipes/serach-params-parse.pipe';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
-import {
-  Controller,
-  Post,
-  Param,
-  Body,
-  UseInterceptors,
-  UploadedFile,
-  UsePipes,
-  Get,
-  Query,
-} from '@nestjs/common';
+import { Controller, Post, Param, Body, UseInterceptors, UploadedFile, UsePipes, Get, Query } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Roles } from '@permission/role/role.decorator';
-import { Role } from '@permission/role/enums/role.enum';
 
-@Roles(Role.Admin, Role.Manager)
 @Controller('book')
 export class BookController {
-  constructor(
-    private doubanService: DoubanService,
-    private bookService: BookService,
-  ) {}
+  constructor(private doubanService: DoubanService, private bookService: BookService) {}
 
   @Get('/get/:isbn')
   async find(@Param('isbn') isbn: string) {
@@ -39,10 +23,7 @@ export class BookController {
 
   @Post('/cover/:isbn')
   @UseInterceptors(FileInterceptor('file'))
-  cover(
-    @UploadedFile() file: Express.Multer.File,
-    @Param('isbn') isbn: string,
-  ) {
+  cover(@UploadedFile() file: Express.Multer.File, @Param('isbn') isbn: string) {
     return this.bookService.updateCover(isbn, file);
   }
 

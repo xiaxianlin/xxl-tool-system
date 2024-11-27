@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from '@user/user.module';
+import { UserAccountModule } from '@user/account/user-account.module';
 import { AuthModule } from '@permission/auth/auth.module';
 import { RoleModule } from '@permission/role/role.module';
 import { BookModule } from '@book/book.module';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
-import { UserService } from '@user/services/user.service';
+import { UserAccountService } from '@user/account/user-account.service';
 import { JwtService } from '@nestjs/jwt';
 import { AiModule } from './ai/ai.module';
 import { SharedModule } from './shared/shared.module';
@@ -29,13 +29,13 @@ import { MenuService } from '@permission/menu/menu.service';
     }),
     AuthModule,
     RoleModule,
-    UserModule,
+    UserAccountModule,
     BookModule,
     AiModule,
     SharedModule,
     MenuModule,
   ],
   controllers: [AppController],
-  providers: [AppService, UserService, JwtService, RoleService, MenuService],
+  providers: [AppService, UserAccountService, JwtService, RoleService, MenuService],
 })
 export class AppModule {}

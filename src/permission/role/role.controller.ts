@@ -1,21 +1,9 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  UsePipes,
-} from '@nestjs/common';
-import { Roles } from './role.decorator';
-import { Role } from './enums/role.enum';
+import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes } from '@nestjs/common';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import { RoleDto, roleSchema } from './role.dto';
 import { RoleService } from './role.service';
 
 @Controller('/role')
-@Roles(Role.Admin)
 export class RoleController {
   constructor(private roleService: RoleService) {}
   @Get('')
