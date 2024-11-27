@@ -1,4 +1,3 @@
-import { Role } from 'src/permission/role/enums/role.enum';
 import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity({ name: 'book' })
