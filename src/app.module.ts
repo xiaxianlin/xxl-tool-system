@@ -12,6 +12,7 @@ import { AiModule } from './ai/ai.module';
 import { SharedModule } from './shared/shared.module';
 import { RoleService } from '@permission/role/role.service';
 import { MenuModule } from '@permission/menu/menu.module';
+import { MenuService } from '@permission/menu/menu.service';
 
 @Module({
   imports: [
@@ -35,6 +36,6 @@ import { MenuModule } from '@permission/menu/menu.module';
     MenuModule,
   ],
   controllers: [AppController],
-  providers: [AppService, UserService, JwtService, RoleService],
+  providers: [AppService, UserService, JwtService, RoleService, MenuService],
 })
 export class AppModule {}

@@ -1,25 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MenuItemEntity } from '../entities/menu.entity';
+import { MenuEntity } from './menu.entity';
 import { Repository } from 'typeorm';
-import { MenuDto } from '../menu.dto';
+import { MenuDto } from './menu.dto';
 import { InternalException } from '@common/expceptions/internal.exception';
 import { time } from '@common/utils/time';
-import { MenuGroupEntity } from '../entities/group.entity';
+import { flatToTree } from '@common/utils/data';
 
 @Injectable()
-export class MenuItemService {
+export class MenuService {
   constructor(
-    @InjectRepository(MenuItemEntity)
-    private menuRepository: Repository<MenuItemEntity>,
+    @InjectRepository(MenuEntity)
+    private menuRepository: Repository<MenuEntity>,
   ) {}
 
-  async initMenu(key: string, name: string) {
-    const menu = await this.menuRepository.findOneBy({ key });
+  async initMenu() {
+    const menu = await this.menuRepository.findOneBy({ key: 'system' });
     if (menu) {
       return true;
     }
-    await this.createMenu({ key, name });
+    const createTime = time.current();
+    const initData = [
+      { key: 'system', name: '系统管理', parent: '', createTime },
+      { key: 'system_user', name: '用户管理', parent: 'system', createTime },
+      { key: 'system_role', name: '角色管理', parent: 'system', createTime },
+      { key: 'system_menu', name: '菜单管理', parent: 'system', createTime },
+    ];
+    const entities = this.menuRepository.create(initData);
+    await this.menuRepository.insert(entities);
   }
 
   async createMenu(dto: MenuDto) {
@@ -45,7 +53,7 @@ export class MenuItemService {
 
     const res = await this.menuRepository.update(
       { key: dto.key },
-      { name: dto.name, group: dto.group, updateTime: time.current() },
+      { name: dto.name, parent: dto.parent, updateTime: time.current() },
     );
     return !!res.affected;
   }
@@ -60,6 +68,7 @@ export class MenuItemService {
   }
 
   async allMenus() {
-    return this.menuRepository.find({ where: { status: 1 } });
+    const menus = await this.menuRepository.find({ where: { status: 1 } });
+    return flatToTree(menus, 'key', 'parent');
   }
 }

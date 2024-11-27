@@ -1,49 +1,15 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  UsePipes,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UsePipes } from '@nestjs/common';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
-import { GroupDto, groupSchema, MenuDto, menuSchema } from './menu.dto';
-import { MenuItemService } from './services/menu.service';
-import { MenuGroupService } from './services/group.service';
-import { groupBy } from 'lodash';
+import { MenuDto, menuSchema } from './menu.dto';
+import { MenuService } from './menu.service';
 
 @Controller('/menu')
 export class MenuController {
-  constructor(
-    private menuService: MenuItemService,
-    private groupService: MenuGroupService,
-  ) {}
-
-  @Post('/group')
-  @UsePipes(new ZodValidationPipe(groupSchema))
-  async createMenuGroup(@Body() dto: GroupDto) {
-    return this.groupService.createMenuGroup(dto);
-  }
-
-  @Put('/group')
-  @UsePipes(new ZodValidationPipe(groupSchema))
-  async modifyMenuGroup(@Body() dto: GroupDto) {
-    return this.groupService.modifyMenuGroup(dto);
-  }
-
-  @Delete('/group/:key')
-  async deleteMenuGroup(@Param('key') key: string) {
-    return this.groupService.deleteMenuGroup(key);
-  }
+  constructor(private menuService: MenuService) {}
 
   @Get()
   async allMenus() {
-    const groups = await this.groupService.allGroups();
-    const menus = await this.menuService.allMenus();
-    const data = groupBy(menus, 'group');
-    return groups.map((g) => ({ ...g, menus: data[g.key] }));
+    return this.menuService.allMenus();
   }
 
   @Post()

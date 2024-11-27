@@ -1,13 +1,15 @@
-import { Entity, Column, PrimaryColumn, OneToMany, JoinColumn } from 'typeorm';
-import { MenuItemEntity } from './menu.entity';
+import { Entity, Column, PrimaryColumn, JoinColumn } from 'typeorm';
 
-@Entity({ name: 'menu_group' })
-export class MenuGroupEntity {
+@Entity({ name: 'menu' })
+export class MenuEntity {
   @PrimaryColumn()
   key: string;
 
   @Column()
   name: string;
+
+  @Column({ default: '' })
+  parent: string;
 
   @Column({ name: 'create_time' })
   createTime: string;
